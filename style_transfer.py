@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
+import os 
 
 import matplotlib.pyplot as plt
 
@@ -23,14 +24,15 @@ loader = transforms.Compose([
     transforms.ToTensor()])  # превращаем в удобный формат
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
 def image_loader(image_name):
     image = Image.open(image_name)
     image = loader(image).unsqueeze(0)
     return image.to(device, torch.float)
 
 
-style_img = image_loader("style2.jpg")# as well as here
-content_img = image_loader("content2.jpg")#измените путь на тот который у вас.
+# style_img = image_loader("style2.jpg")# as well as here
+# content_img = image_loader("content2.jpg")#измените путь на тот который у вас.
 
 unloader = transforms.ToPILImage()
 
@@ -98,9 +100,6 @@ class Normalization(nn.Module):
 
 content_layers_default = ['conv_4']
 style_layers_default = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
-
-
-
 cnn = models.vgg19(pretrained=True).features.to(device).eval()
 
 def get_style_model_and_losses(cnn, normalization_mean, normalization_std,
@@ -227,21 +226,29 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
 
 
 
-input_img = content_img.clone()
+
 
 # add the original input image to the figure:
 plt.figure()
 
-output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
-                            content_img, style_img, input_img)
+
 
 unloader = transforms.ToPILImage()  # reconvert into PIL image
 
-def imshow(tensor, title=None):
+def imshow(tensor, photos_dir):
     image = tensor.clone().cpu()  # we clone the tensor to not do changes on it
     image = image.squeeze(0)      
     # image = image.view(3, 224, 224)  # remove the fake batch dimension
     image = unloader(image)
-    image.save('result2.png')
+    path = f'{photos_dir}/result.jpg' 
+    image.save(path)
+    return path
 
-imshow(output, title='Output Image')
+
+def get_style_transferred_photo(photos_dir, images):
+    style_img = image_loader(images[0])
+    content_img = image_loader(images[1])
+    input_img = content_img.clone()
+    output = run_style_transfer(cnn, cnn_normalization_mean, cnn_normalization_std,
+                            content_img, style_img, input_img)
+    return imshow(output, photos_dir=photos_dir)

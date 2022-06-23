@@ -3,3 +3,4 @@ Pillow==9.1.1
 torch==1.9.0+cu111
 torchvision==0.10.0+cu111
 environs==9.5.0
+aiogram-media-group==0.4.0
