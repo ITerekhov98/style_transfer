@@ -1,4 +1,7 @@
+from ast import Lambda
+import os
 import logging
+from pathlib import Path
 from aiogram import Bot, Dispatcher, executor, types
 
 from environs import Env
@@ -6,8 +9,8 @@ from environs import Env
 
 logger = logging.getLogger(__name__)
 
-
-
+EXAMPLES_DIR = 'examples/'
+img_order = {'content': 0, 'style': 1, 'result': 2}
 
 async def start(message: types.Message):
     keyboard = types.ReplyKeyboardMarkup(resize_keyboard=True)
@@ -17,7 +20,15 @@ async def start(message: types.Message):
     await message.answer('Привет! Чем могу помочь?', reply_markup=keyboard)
 
 async def show_examples(message):
-    await message.answer(1)
+    for root, dirs, images in os.walk(EXAMPLES_DIR):
+        await types.ChatActions.upload_photo()
+        media = types.MediaGroup()
+        for image in sorted(images, key= lambda x: img_order[x[:-4]]):
+            path_img = f'{root}/{image}'
+            media.attach_photo(types.InputFile(path_img), image[:-4])
+        if images:
+            await message.reply_media_group(media=media)
+
 
 
 async def handle_style_transfer(message):
