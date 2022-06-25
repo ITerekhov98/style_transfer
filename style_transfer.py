@@ -208,7 +208,6 @@ def save_img(tensor, photos_dir):
 
 
 def get_style_transferred_photo(photos_dir, images):
-    1/0
     style_img = image_loader(images[0])
     content_img = image_loader(images[1])
     input_img = content_img.clone()
