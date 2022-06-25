@@ -28,7 +28,7 @@ async def show_examples(message):
     for root, dirs, images in os.walk(EXAMPLES_DIR):
         await types.ChatActions.upload_photo()
         media = types.MediaGroup()
-        for image in sorted(images, key= lambda x: img_order[x[:-4]]):
+        for image in sorted(images, key= lambda x: img_order[x.split('.')[0]]):
             path_img = f'{root}/{image}'
             media.attach_photo(types.InputFile(path_img), image[:-4])
         if images:
