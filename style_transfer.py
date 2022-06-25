@@ -4,9 +4,6 @@ import torch.nn.functional as F
 import torch.optim as optim
 import os 
 
-import matplotlib.pyplot as plt
-
-
 import torchvision.transforms as transforms
 import torchvision.models as models
 
@@ -223,15 +220,6 @@ def run_style_transfer(cnn, normalization_mean, normalization_std,
         input_img.data.clamp_(0, 1)
 
         return input_img
-
-
-
-
-
-# add the original input image to the figure:
-plt.figure()
-
-
 
 unloader = transforms.ToPILImage()  # reconvert into PIL image
 
