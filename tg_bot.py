@@ -12,6 +12,7 @@ from aiogram.dispatcher.filters import MediaGroupFilter
 from aiogram_media_group import media_group_handler
 from aiogram.types import ContentType
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from logging.handlers import RotatingFileHandler
 
 from style_transfer import get_style_transferred_photo
 
@@ -47,8 +48,8 @@ async def show_examples(message):
 
 async def handle_style_transfer(message):
     await message.answer(
-        '''Окей, всё что тебе нужно это прислать мне 2 фото:\
-        1 послужит примером стиля, а на второй я постараюсь\
+        '''Окей, всё что тебе нужно это прислать мне 2 фото:
+        1 послужит примером стиля, а на второй я постараюсь
         его перенести. Не перепутай )'''
     )
     await BotStates.waiting_for_photos.set()
@@ -63,17 +64,37 @@ async def download_photo(messages: List[types.Message], state: FSMContext):
         )
         images.append(buffer.name)
     photos_dir = os.path.split(buffer.name)[0]
-    styled_photo_path = get_style_transferred_photo(photos_dir, images)
+    logger.info(f'Proccess photos from user {message.chat.id}...')
+    try:
+        styled_photo_path = get_style_transferred_photo(photos_dir, images)
+    except Exception as err:
+        logger.error(err, exc_info=True)
+        await message.answer('Что-то пошло не так. Попробуй пожалуйста ещё раз')
+        return
+
     await types.ChatActions.upload_photo()
     media = types.MediaGroup()
     media.attach_photo(types.InputFile(styled_photo_path))
     await message.reply_media_group(media=media)
+    logger.info(f'Success')
     shutil.rmtree(photos_dir)
     await state.finish()
 
 
 async def main():
-    logger.setLevel(logging.INFO)
+    Log_Format = "%(levelname)s %(asctime)s - %(message)s"
+    logging.basicConfig(
+        filename = "logfile.log",
+        format = Log_Format, 
+        level = logging.INFO
+    )
+    handler = RotatingFileHandler(
+        "logfile.log",
+        maxBytes=100000,
+        backupCount=2
+    )
+    logger.addHandler(handler)
+
     env = Env()
     env.read_env()
     bot = Bot(token=env.str('TG_BOT_TOKEN'))

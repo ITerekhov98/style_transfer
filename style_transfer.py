@@ -1,5 +1,7 @@
 import copy
 
+import logging 
+
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -12,6 +14,8 @@ from environs import Env
 
 env = Env()
 env.read_env()
+
+logger = logging.getLogger(__name__)
 
 img_size = env.int('IMAGE_SIZE', 256)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -154,7 +158,7 @@ def run_style_transfer(
         content_weight=1):
     """Run the style transfer."""
 
-    print('Building the style transfer model..')
+    logger.info('Building the style transfer model..')
     model, style_losses, content_losses = get_style_model_and_losses(
         cnn,
         normalization_mean,
@@ -163,7 +167,7 @@ def run_style_transfer(
         content_img
     )
     optimizer = get_input_optimizer(input_img)
-    print('Optimizing..')
+    logger.info('Optimizing..')
     run = [0]
     while run[0] <= num_steps:
         def closure():
@@ -185,10 +189,9 @@ def run_style_transfer(
 
             run[0] += 1
             if run[0] % 50 == 0:
-                print("run {}:".format(run))
-                print('Style Loss : {:4f} Content Loss: {:4f}'.format(
+                logger.info("run {}:".format(run))
+                logger.info('Style Loss : {:4f} Content Loss: {:4f}'.format(
                     style_score.item(), content_score.item()))
-                print()
             return style_score + content_score
         optimizer.step(closure)
     input_img.data.clamp_(0, 1)
@@ -205,6 +208,7 @@ def save_img(tensor, photos_dir):
 
 
 def get_style_transferred_photo(photos_dir, images):
+    1/0
     style_img = image_loader(images[0])
     content_img = image_loader(images[1])
     input_img = content_img.clone()
