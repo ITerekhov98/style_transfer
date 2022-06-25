@@ -1,20 +1,22 @@
 import os
 import shutil
 import logging
-from aiogram import Bot, Dispatcher, executor, types
-from environs import Env
 from typing import List
+
+from environs import Env
+from aiogram import Bot, Dispatcher, executor, types
 from aiogram.dispatcher.filters import MediaGroupFilter
 from aiogram_media_group import media_group_handler
 from aiogram.types import ContentType
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 
 from style_transfer import get_style_transferred_photo
+
+
 logger = logging.getLogger(__name__)
 
 EXAMPLES_DIR = 'examples/'
 img_order = {'content': 0, 'style': 1, 'result': 2}
-
 
 
 async def start(message: types.Message):
@@ -23,6 +25,7 @@ async def start(message: types.Message):
     button_2 = types.KeyboardButton(text="Покажи примеры своих скиллов")
     keyboard.add(button_1, button_2)
     await message.answer('Привет! Чем могу помочь?', reply_markup=keyboard)
+
 
 async def show_examples(message):
     for root, dirs, images in os.walk(EXAMPLES_DIR):
@@ -35,18 +38,23 @@ async def show_examples(message):
             await message.reply_media_group(media=media)
 
 
-
 async def handle_style_transfer(message):
-    await message.answer('Окей, всё что тебе нужно это прислать мне 2 фото: 1 послужит примером стиля, а на второй я постараюсь его перенести. Не перепутай )')
+    await message.answer(
+        '''Окей, всё что тебе нужно это прислать мне 2 фото:\
+        1 послужит примером стиля, а на второй я постараюсь\
+        его перенести. Не перепутай )'''
+    )
 
 
 @media_group_handler
 async def download_photo(messages: List[types.Message]):
     images = []
     for message in messages:
-        buffer = await message.photo[-1].download(destination_dir=f"users/{message.chat.id}")
+        buffer = await message.photo[-1].download(
+            destination_dir=f"users/{message.chat.id}"
+        )
         images.append(buffer.name)
-    photos_dir = os.path.split(buffer.name)[0] 
+    photos_dir = os.path.split(buffer.name)[0]
     styled_photo_path = get_style_transferred_photo(photos_dir, images)
     await types.ChatActions.upload_photo()
     media = types.MediaGroup()
@@ -59,15 +67,24 @@ def main():
     logger.setLevel(logging.INFO)
     env = Env()
     env.read_env()
-    bot = Bot(token=env.str('TG_BOT_TOKEN'))  
+    bot = Bot(token=env.str('TG_BOT_TOKEN'))
     dp = Dispatcher(bot, storage=MemoryStorage())
 
     dp.register_message_handler(start, commands="start")
-    dp.register_message_handler(show_examples, lambda message: message.text == 'Покажи примеры своих скиллов')
-    dp.register_message_handler(handle_style_transfer, lambda message: message.text == "Хочу перенести стиль на фото")
-    dp.register_message_handler(download_photo, MediaGroupFilter(is_media_group=True), content_types=ContentType.PHOTO)
+    dp.register_message_handler(
+        show_examples,
+        lambda message: message.text == 'Покажи примеры своих скиллов'
+    )
+    dp.register_message_handler(
+        handle_style_transfer,
+        lambda message: message.text == "Хочу перенести стиль на фото"
+    )
+    dp.register_message_handler(
+        download_photo,
+        MediaGroupFilter(is_media_group=True),
+        content_types=ContentType.PHOTO
+    )
     executor.start_polling(dp, skip_updates=True)
-
 
 
 if __name__ == "__main__":
