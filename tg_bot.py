@@ -64,6 +64,7 @@ async def download_photo(messages: List[types.Message], state: FSMContext):
         )
         images.append(buffer.name)
     photos_dir = os.path.split(buffer.name)[0]
+    await message.answer('Принял. Дай мне 2-3 минуты')
     logger.info(f'Proccess photos from user {message.chat.id}...')
     try:
         styled_photo_path = get_style_transferred_photo(photos_dir, images)
